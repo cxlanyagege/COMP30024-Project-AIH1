@@ -1,14 +1,55 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part A: Single Player Tetress
+# Authors: He Shen, Lanruo Su
 
-from .core import PlayerColor, Coord, PlaceAction
+from .core import PlayerColor, Coord, PlaceAction, Direction
 from .utils import render_board
+from queue import PriorityQueue
 
+def get_initials(
+        board: dict[Coord, PlayerColor], 
+        red_neighbors: set
+        ) -> list[PlaceAction]:
+    
+    # Find all possible initial placements
+    initial_placements = []
+
+    # Append free neighbors of the existing red pieces
+    for coord in red_neighbors:
+        for direction in Direction:
+            new_coord = coord + direction.value
+            if new_coord in board:
+                continue   # Skip non-empty cell
+            initial_placements.append(PlaceAction(new_coord, PlayerColor.RED))
+
+    return initial_placements
+
+def get_neighbors(
+        coord: Coord, 
+        board: dict[Coord, PlayerColor]
+        ) -> list[Coord]:
+    
+    # Generate all possible neighbors
+    neighbors = []
+    for direction in Direction:
+        neighbor = coord + direction.value
+        if neighbor in board and board[neighbor] == PlayerColor.BLUE:
+            continue  # Skip blue cells
+        neighbors.append(neighbor)
+
+    return neighbors
+
+def get_heuristic(
+        coord1: Coord, coord2: Coord
+        ) -> int:
+    
+    # Use manhattan distance as heuristic for goal cost
+    return abs(coord1.r - coord2.r) + abs(coord1.c - coord2.c)
 
 def search(
-    board: dict[Coord, PlayerColor], 
-    target: Coord
-) -> list[PlaceAction] | None:
+        board: dict[Coord, PlayerColor], 
+        target: Coord
+        ) -> list[PlaceAction] | None:
     """
     This is the entry point for your submission. You should modify this
     function to solve the search problem discussed in the Part A specification.
@@ -35,12 +76,5 @@ def search(
     # ... (your solution goes here!)
     # ...
 
-    # Here we're returning "hardcoded" actions as an example of the expected
-    # output format. Of course, you should instead return the result of your
-    # search algorithm. Remember: if no solution is possible for a given input,
-    # return `None` instead of a list.
-    return [
-        PlaceAction(Coord(2, 5), Coord(2, 6), Coord(3, 6), Coord(3, 7)),
-        PlaceAction(Coord(1, 8), Coord(2, 8), Coord(3, 8), Coord(4, 8)),
-        PlaceAction(Coord(5, 8), Coord(6, 8), Coord(7, 8), Coord(8, 8)),
-    ]
+    # Return `None` when no place actions are possible
+    return None
