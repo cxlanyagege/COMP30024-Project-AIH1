@@ -6,45 +6,48 @@ from .core import PlayerColor, Coord, PlaceAction, Direction
 from .utils import render_board
 from queue import PriorityQueue
 
-def get_initials(
-        board: dict[Coord, PlayerColor], 
-        red_neighbors: set
-        ) -> list[PlaceAction]:
-    
-    # Find all possible initial placements
-    initial_placements = []
-
-    # Append free neighbors of the existing red pieces
-    for coord in red_neighbors:
-        for direction in Direction:
-            new_coord = coord + direction.value
-            if new_coord in board:
-                continue   # Skip non-empty cell
-            initial_placements.append(PlaceAction(new_coord, PlayerColor.RED))
-
-    return initial_placements
-
-def get_neighbors(
-        coord: Coord, 
-        board: dict[Coord, PlayerColor]
-        ) -> list[Coord]:
-    
-    # Generate all possible neighbors
-    neighbors = []
-    for direction in Direction:
-        neighbor = coord + direction.value
-        if neighbor in board and board[neighbor] == PlayerColor.BLUE:
-            continue  # Skip blue cells
-        neighbors.append(neighbor)
-
-    return neighbors
-
 def get_heuristic(
         coord1: Coord, coord2: Coord
         ) -> int:
     
     # Use manhattan distance as heuristic for goal cost
     return abs(coord1.r - coord2.r) + abs(coord1.c - coord2.c)
+
+def find_empty_neighbors(
+        board: dict[Coord, PlayerColor],
+        ) -> set[Coord]:
+    
+    empty_neighbors = set()
+
+    for coord, color in board.items():
+        if color == PlayerColor.RED:
+            # Check neighbors of red pieces
+            for direction in [Direction.Up, Direction.Down, Direction.Left, Direction.Right]:
+                # Get neighbor coordinate
+                neighbor = coord + direction.value
+                # Record if neighbor is empty
+                if neighbor not in board or board.get(neighbor) not in [PlayerColor.RED, PlayerColor.BLUE]:
+                    empty_neighbors.add(neighbor)
+
+    return empty_neighbors
+
+def find_nearest_to_blue_target(
+        board: dict[Coord, PlayerColor],
+        empty_neighbors: set[Coord],
+        target: Coord,
+        get_heuristic) -> Coord | None:
+    
+    # Neighbors are empty
+    if not empty_neighbors:
+        return None
+    
+    # Find the nearest empty neighbor to the target
+    neighbors_with_cost = [(neighbor, get_heuristic(neighbor, target)) for neighbor in empty_neighbors]
+    
+    # Sort neighbors by cost
+    sorted_neighbors = sorted(neighbors_with_cost, key=lambda x: x[1])
+
+    return [coord for coord, cost in sorted_neighbors]
 
 def search(
         board: dict[Coord, PlayerColor], 
@@ -76,5 +79,25 @@ def search(
     # ... (your solution goes here!)
     # ...
 
+    # Step 1: Find empty neighbors of red pieces
+    empty_neighbors = find_empty_neighbors(board)
+    print(empty_neighbors)
+    
+    # Step 2: Find the nearest empty neighbor to the target
+    nearest_coord = find_nearest_to_blue_target(board, 
+                                                 empty_neighbors, 
+                                                 target, 
+                                                 get_heuristic)
+    print(nearest_coord)
+
+    # Step 3: Generate place actions
+    
+
+    # Sample "hardcoded" actions
+    # return [
+    #     PlaceAction(Coord(2, 5), Coord(2, 6), Coord(3, 6), Coord(3, 7)),
+    #     PlaceAction(Coord(1, 8), Coord(2, 8), Coord(3, 8), Coord(4, 8)),
+    #     PlaceAction(Coord(5, 8), Coord(6, 8), Coord(7, 8), Coord(8, 8)),
+    # ]
     # Return `None` when no place actions are possible
     return None
