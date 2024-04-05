@@ -5,6 +5,7 @@
 
 from .core import PlayerColor, Coord, PlaceAction, Direction
 from .utils import render_board
+from .placements import handle_special_placement, handle_final_placement
 from queue import PriorityQueue
 
 
@@ -66,12 +67,23 @@ def sort_reds_by_distance(
     # Calculate distance between red blocks and empty cells
     for coord, player in board.items():
         if player == PlayerColor.RED:
+
+            # Count total empty cells on the row and column
+            total_empty = 0
+            for i in range(11):
+                if Coord(i, coord.c) not in board:
+                    total_empty += 1
+            for j in range(11):
+                if Coord(coord.r, j) not in board:
+                    total_empty += 1
+
+            # Append tuple with distance and empty cell
             for empty_space in empty_spaces:
                 distance = get_heuristic(coord, empty_space)
-                distances.append((coord, distance, empty_space))
+                distances.append((coord, distance, empty_space, total_empty))
 
     # Sort by distance size
-    distances.sort(key=lambda x: x[1])
+    distances.sort(key=lambda x: (x[1], -x[3]))
 
     return distances
 
@@ -158,7 +170,7 @@ def update_board(
     board[action.c2] = PlayerColor.RED
     board[action.c3] = PlayerColor.RED
     board[action.c4] = PlayerColor.RED
-
+  
 
 def gen_place_actions(
         path: list[Coord], 
@@ -167,13 +179,16 @@ def gen_place_actions(
         pos: int
         ) -> list[PlaceAction]:
     
+    i = 1
     step_counter = 0
     place_actions = []
+    special_actions = []
+    final_actions = []
 
     for i in range(1, len(path) - 1):
         step_counter += 1
 
-        # Generate 4-smooth place actions
+        # Generate 4-continuous place actions
         if step_counter % 4 == 0:
             place_actions.append(
                 PlaceAction(path[i-3], path[i-2], path[i-1], path[i]))
@@ -187,7 +202,7 @@ def gen_place_actions(
             # Current position is at the edge of the column
             if abs(path[i].c - pos) == 1 or abs(path[i].c - pos) == 10:
 
-                # check if neighbor is empty ir not
+                # check if neighbor is empty or not
                 if Coord(path[i].r, pos) not in board:
                     break
 
@@ -197,12 +212,25 @@ def gen_place_actions(
             # Current position is at the edge of the row
             if abs(path[i].r - pos) == 1 or abs(path[i].r - pos) == 10:
 
-                # check if neighbor is empty ir not
+                # check if neighbor is empty or not
                 if Coord(pos, path[i].c) not in board:
                     break
 
-    # Handle special placement when steps are not 4
-    
+    # Handle special placement when there are remaining steps
+    if i > 1:
+        special_actions = handle_special_placement(
+            path[i - (step_counter % 4) + 1: i + 1],
+            board,
+            dim,
+            pos)
+        update_board(board, special_actions[-1])
+        
+    # Handle final placements in target row or column
+    handle_final_placement()
+
+    # Combine all placements
+    place_actions = place_actions + special_actions + final_actions
+
     return place_actions
 
 
@@ -238,14 +266,16 @@ def search(
 
     # 2. Use heuristic to sort red blocks by distance to empty cells
     red_blocks = sort_reds_by_distance(board, dim, pos)
+
     if not red_blocks:
         return None
 
     # 3. Use A* to generate path to nearest empty cell
     can_generate = False
+
     for red_block in red_blocks:
-        start, distance, target = red_block
-        path = a_star_search(board, start, target)
+        start, distance, goal, total = red_block
+        path = a_star_search(board, start, goal)
         if path:
             can_generate = True
             break
@@ -253,12 +283,12 @@ def search(
     if not can_generate:
         return None
     
-    # 4. Place actions prior to the row or column
+    # 4. Place actions
     place_actions = gen_place_actions(path, board, dim, pos)
 
     print(render_board(board, target, ansi=True))
 
+    if not place_actions:
+        return None
+
     return place_actions
-    
-    # Return `None` when no place actions are possible
-    return None
