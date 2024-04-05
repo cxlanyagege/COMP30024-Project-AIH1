@@ -148,6 +148,64 @@ def a_star_search(board: dict[Coord, PlayerColor],
     return None
 
 
+def update_board(
+        board: dict[Coord, PlayerColor],
+        action: PlaceAction
+        ):
+    
+    # Set Tetromino coordinates to red
+    board[action.c1] = PlayerColor.RED
+    board[action.c2] = PlayerColor.RED
+    board[action.c3] = PlayerColor.RED
+    board[action.c4] = PlayerColor.RED
+
+
+def gen_place_actions(
+        path: list[Coord], 
+        board:dict[Coord, PlayerColor], 
+        dim: str, 
+        pos: int
+        ) -> list[PlaceAction]:
+    
+    step_counter = 0
+    place_actions = []
+
+    for i in range(1, len(path) - 1):
+        step_counter += 1
+
+        # Generate 4-smooth place actions
+        if step_counter % 4 == 0:
+            place_actions.append(
+                PlaceAction(path[i-3], path[i-2], path[i-1], path[i]))
+            
+            # Update board status
+            update_board(board, place_actions[-1])
+            
+        # Stop when reaching blank edge of columm
+        if dim == "col":
+
+            # Current position is at the edge of the column
+            if abs(path[i].c - pos) == 1 or abs(path[i].c - pos) == 10:
+
+                # check if neighbor is empty ir not
+                if Coord(path[i].r, pos) not in board:
+                    break
+
+        # Or stop when reaching blank edge of row
+        elif dim == "row":
+
+            # Current position is at the edge of the row
+            if abs(path[i].r - pos) == 1 or abs(path[i].r - pos) == 10:
+
+                # check if neighbor is empty ir not
+                if Coord(pos, path[i].c) not in board:
+                    break
+
+    # Handle special placement when steps are not 4
+    
+    return place_actions
+
+
 def search(
         board: dict[Coord, PlayerColor], 
         target: Coord
@@ -171,37 +229,36 @@ def search(
     # The render_board() function is handy for debugging. It will print out a
     # board state in a human-readable format. If your terminal supports ANSI
     # codes, set the `ansi` flag to True to print a colour-coded version!
-    print(render_board(board, target, ansi=False))
+    print(render_board(board, target, ansi=True))
 
-    # Do some impressive AI stuff here to find the solution...
-    # ...
-    # ... (your solution goes here!)
-    # ...
+    # Some impressive AI stuff here to find the solution...
     
     # 1. Choose row/column with the least blank cells
     dim, pos = find_init_row_col(board, target)
 
     # 2. Use heuristic to sort red blocks by distance to empty cells
     red_blocks = sort_reds_by_distance(board, dim, pos)
+    if not red_blocks:
+        return None
 
     # 3. Use A* to generate path to nearest empty cell
-    start, distance, target = red_blocks[0]
-    path = a_star_search(board, start, target)
-    if path:
-        print("Path found:", path)
-        return path
-    else:
-        print("No path found")
+    can_generate = False
+    for red_block in red_blocks:
+        start, distance, target = red_block
+        path = a_star_search(board, start, target)
+        if path:
+            can_generate = True
+            break
+
+    if not can_generate:
         return None
     
-    # 4. Place actions through the first part of the path
+    # 4. Place actions prior to the row or column
+    place_actions = gen_place_actions(path, board, dim, pos)
+
+    print(render_board(board, target, ansi=True))
+
+    return place_actions
     
-    
-    # Sample "hardcoded" actions
-    # return [
-    #     PlaceAction(Coord(2, 5), Coord(2, 6), Coord(3, 6), Coord(3, 7)),
-    #     PlaceAction(Coord(1, 8), Coord(2, 8), Coord(3, 8), Coord(4, 8)),
-    #     PlaceAction(Coord(5, 8), Coord(6, 8), Coord(7, 8), Coord(8, 8)),
-    # ]
     # Return `None` when no place actions are possible
     return None
