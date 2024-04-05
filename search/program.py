@@ -2,9 +2,37 @@
 # Project Part A: Single Player Tetress
 # Authors: He Shen, Lanruo Su
 
+
 from .core import PlayerColor, Coord, PlaceAction, Direction
 from .utils import render_board
 from queue import PriorityQueue
+
+
+def find_init_row_col(
+        board: dict[Coord, PlayerColor], 
+        target: Coord
+        ) -> tuple[str, int]:
+    
+    row_empty_spaces = 0
+    col_empty_spaces = 0
+    board_size = 11
+
+    # Count empty spaces in the target's row
+    for c in range(board_size):
+        if Coord(target.r, c) not in board:
+            row_empty_spaces += 1
+
+    # Count empty spaces in the target's column
+    for r in range(board_size):
+        if Coord(r, target.c) not in board:
+            col_empty_spaces += 1
+
+    # Determine which dimension has fewer empty spaces and return it
+    if row_empty_spaces < col_empty_spaces:
+        return ("row", target.r)
+    else:
+        return ("col", target.c)
+
 
 def get_heuristic(
         coord1: Coord, 
@@ -15,25 +43,38 @@ def get_heuristic(
     distance = abs(coord1.r - coord2.r) + abs(coord1.c - coord2.c)
     return distance
 
+
 def sort_reds_by_distance(
         board: dict[Coord, PlayerColor],
-        target: Coord
+        dimension: str, 
+        position: int
         ) -> list[Coord]:
     
-    # Initialize a list to store red blocks
-    red_blocks = []
+    empty_spaces = []
+    distances = []
 
-    # Iterate over all board positions
+    # Collect empty cells in targeted row or column
+    if dimension == "row":
+        for c in range(11):
+            if Coord(position, c) not in board:
+                empty_spaces.append(Coord(position, c))
+    elif dimension == "col":
+        for r in range(11):
+            if Coord(r, position) not in board:
+                empty_spaces.append(Coord(r, position))
+
+    # Calculate distance between red blocks and empty cells
     for coord, player in board.items():
-        # If the block is red
         if player == PlayerColor.RED:
-            # Append the coordinate to the list
-            red_blocks.append(coord)
+            for empty_space in empty_spaces:
+                distance = get_heuristic(coord, empty_space)
+                distances.append((coord, distance, empty_space))
 
-    # Sort the list by Manhattan distance to the target
-    red_blocks.sort(key=lambda coord: get_heuristic(coord, target))
+    # Sort by distance size
+    distances.sort(key=lambda x: x[1])
 
-    return red_blocks
+    return distances
+
 
 def get_neighbors(
         coord: Coord, 
@@ -56,6 +97,7 @@ def get_neighbors(
 
     return neighbors
 
+
 def reconstruct_path(came_from, 
                      start, 
                      goal):
@@ -71,6 +113,7 @@ def reconstruct_path(came_from,
     path.reverse()
 
     return path
+
 
 def a_star_search(board: dict[Coord, PlayerColor], 
                   start: Coord, 
@@ -104,6 +147,7 @@ def a_star_search(board: dict[Coord, PlayerColor],
     # No path was found
     return None
 
+
 def search(
         board: dict[Coord, PlayerColor], 
         target: Coord
@@ -133,14 +177,15 @@ def search(
     # ...
     # ... (your solution goes here!)
     # ...
+    
+    # 1. Choose row/column with the least blank cells
+    dim, pos = find_init_row_col(board, target)
 
-    # 1. Use heuristic to sort red blocks by distance to target
-    red_blocks = sort_reds_by_distance(board, target)
-    if not red_blocks:
-        return None
+    # 2. Use heuristic to sort red blocks by distance to empty cells
+    red_blocks = sort_reds_by_distance(board, dim, pos)
 
-    # 2. Use A* search to find the optimal path
-    start = red_blocks[0]
+    # 3. Use A* to generate path to nearest empty cell
+    start, distance, target = red_blocks[0]
     path = a_star_search(board, start, target)
     if path:
         print("Path found:", path)
@@ -148,6 +193,9 @@ def search(
     else:
         print("No path found")
         return None
+    
+    # 4. Place actions through the first part of the path
+    
     
     # Sample "hardcoded" actions
     # return [
