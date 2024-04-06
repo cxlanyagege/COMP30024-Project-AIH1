@@ -170,6 +170,25 @@ def update_board(
     board[action.c2] = PlayerColor.RED
     board[action.c3] = PlayerColor.RED
     board[action.c4] = PlayerColor.RED
+
+    board_size = 11
+
+    # Search for filled rows and columns
+    filled_rows = set()
+    filled_cols = set()
+
+    for r in range(board_size):
+        if all(Coord(r, c) in board for c in range(board_size)):
+            filled_rows.add(r)
+
+    for c in range(board_size):
+        if all(Coord(r, c) in board for r in range(board_size)):
+            filled_cols.add(c)
+
+    # Eliminate filled rows and columns
+    for coord in list(board.keys()):
+        if coord.r in filled_rows or coord.c in filled_cols:
+            del board[coord]
   
 
 def gen_place_actions(
@@ -223,11 +242,24 @@ def gen_place_actions(
             board,
             dim,
             pos)
-        update_board(board, special_actions[-1])
+        
+        if special_actions:
+            update_board(board, special_actions[-1])
         
     # Handle final placements in target row or column
-    handle_final_placement()
-
+    final_actions = handle_final_placement(
+        place_actions, 
+        special_actions, 
+        board, 
+        dim, 
+        pos)
+    
+    if not final_actions:
+        return None
+    else:
+        for action in final_actions:
+            update_board(board, action)
+        
     # Combine all placements
     place_actions = place_actions + special_actions + final_actions
 

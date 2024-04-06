@@ -12,8 +12,6 @@ def handle_special_placement(
         dim: str,
         pos: int
         ) -> list[PlaceAction]:
-    
-    print(path)
 
     special_actions = []
 
@@ -465,6 +463,47 @@ def handle_special_placement(
     return special_actions
 
 
-def handle_final_placement():
-    pass
-        
+def handle_final_placement(
+        place_actions: list[PlaceAction],
+        special_actions: list[PlaceAction],
+        board: dict[Coord, PlayerColor],
+        dim: str,
+        pos: int
+        ) -> list[PlaceAction]:
+    
+    last_action = []
+    final_actions = []
+
+    # Check last touching action position
+    if not special_actions:
+        last_action = place_actions[-1]
+    else:
+        last_action = special_actions[-1]
+
+    # Check empty availability
+    step_count = 0
+    if dim == "col":
+        for r in range(11):
+
+            # Empty continues
+            if Coord(r, pos) not in board:
+                step_count += 1
+
+            # Empty discontinuous
+            else:
+                if step_count == 1:
+                    step = 0
+                    pass
+                elif step_count == 2:
+                    step = 0
+                    pass
+                elif step_count == 3:
+                    step = 0
+                    pass
+
+            # 4 continuous placements
+            if step_count == 4:
+                final_actions.append(PlaceAction(Coord(r-3, pos), Coord(r-2, pos), Coord(r-1, pos), Coord(r, pos)))
+                step_count = 0
+
+    return final_actions
