@@ -304,19 +304,27 @@ def search(
 
     # 3. Use A* to generate path to nearest empty cell
     can_generate = False
+    shortest_path = []
 
     for red_block in red_blocks:
         start, distance, goal, total = red_block
         path = a_star_search(board, start, goal)
-        if path:
+
+        # Check if path is valid and no new shortest path is found
+        if path and not shortest_path:
             can_generate = True
+            shortest_path = path
+
+        # Check if there are unreachable empty cells on target row or column
+        if not path and can_generate:
+            can_generate = False
             break
 
     if not can_generate:
         return None
     
     # 4. Place actions
-    place_actions = gen_place_actions(path, board, dim, pos)
+    place_actions = gen_place_actions(shortest_path, board, dim, pos)
 
     print(render_board(board, target, ansi=True))
 
