@@ -4,6 +4,7 @@
 
 
 from .core import Coord, Direction, PlayerColor, PlaceAction
+from .a_star import a_star_search, get_heuristic
 
 
 def handle_special_placement(
@@ -452,11 +453,19 @@ def handle_special_placement(
 
         # Concave to column
         if dim == "col":
+
+            # Try I (2)
             if (path[0] + Direction.Up) not in board and (path[0] + Direction.Up + Direction.Up) not in board and (path[0] + Direction.Up + Direction.Up + Direction.Up) not in board:
                 special_actions.append(PlaceAction(path[0], path[0] + Direction.Up, path[0] + Direction.Up + Direction.Up, path[0] + Direction.Up + Direction.Up + Direction.Up))
+
+            # Try Z (1)
+            elif (path[0] + Direction.Right) not in board and (path[0] + Direction.Right + Direction.Down) not in board and (path[0] + Direction.Right + Direction.Down + Direction.Right) not in board:
+                special_actions.append(PlaceAction(path[0], path[0] + Direction.Right, path[0] + Direction.Right + Direction.Down, path[0] + Direction.Right + Direction.Down + Direction.Right))
  
         # Concave to row
         elif dim == "row":
+
+            # Try I (1)
             if (path[0] + Direction.Left) not in board and (path[0] + Direction.Left + Direction.Left) not in board and (path[0] + Direction.Left + Direction.Left + Direction.Left) not in board:
                 special_actions.append(PlaceAction(path[0], path[0] + Direction.Left, path[0] + Direction.Left + Direction.Left, path[0] + Direction.Left + Direction.Left + Direction.Left))
 
@@ -473,37 +482,135 @@ def handle_final_placement(
     
     last_action = []
     final_actions = []
+    path = []
 
     # Check last touching action position
     if not special_actions:
-        last_action = place_actions[-1]
+        if place_actions:
+            last_action = place_actions[-1]
     else:
-        last_action = special_actions[-1]
+            last_action = special_actions[-1]
 
     # Check empty availability
     step_count = 0
     if dim == "col":
-        for r in range(11):
+        r = 0
+        while r < 11:
 
             # Empty continues
             if Coord(r, pos) not in board:
+                path.append(Coord(r, pos))
                 step_count += 1
 
             # Empty discontinuous
             else:
                 if step_count == 1:
-                    step = 0
-                    pass
+                    step_count = 0
+                    
+                    
+                    if final_actions:
+                        a_path = a_star_search(board, final_actions[-1].c4, Coord(r - 1, pos))
+
+                        if len(a_path) - 1 == 4:
+                            final_actions.append(PlaceAction(a_path[1], a_path[2], a_path[3], a_path[4]))
+                            path = []
+                            continue
+                        elif len(a_path) - 1 == 3:
+                            temp_actions = handle_special_placement(a_path[1:], board, dim, pos)
+                            if temp_actions:
+                                final_actions += temp_actions
+                            path = []
+                            continue
+                        elif len(a_path) - 1 == 2:
+                            temp_actions = handle_special_placement(a_path[1:], board, dim, pos)
+                            if temp_actions:
+                                final_actions += temp_actions
+                            path = []
+                            continue
+                        elif len(a_path) - 1 == 1:
+                            temp_actions = handle_special_placement(a_path[1:], board, dim, pos)
+                            if temp_actions:
+                                final_actions += temp_actions
+                            path = []
+                            continue
+
                 elif step_count == 2:
-                    step = 0
-                    pass
+                    step_count = 0
+
+                    if final_actions:
+                        a_path = a_star_search(board, final_actions[-1].c4, Coord(r - 2, pos))
+
+                        if len(a_path) - 1 == 4:
+                            final_actions.append(PlaceAction(a_path[1], a_path[2], a_path[3], a_path[4]))
+                            r -= 1
+                            path = []
+                            continue
+                        elif len(a_path) - 1 == 3:
+                            temp_actions = handle_special_placement(a_path[1:], board, dim, pos)
+                            if temp_actions:
+                                final_actions += temp_actions
+                            r -= 1
+                            path = []
+                            continue
+                        elif len(a_path) - 1 == 2:
+                            temp_actions = handle_special_placement(a_path[1:], board, dim, pos)
+                            if temp_actions:
+                                final_actions += temp_actions
+                            r -= 1
+                            path = []
+                            continue
+                        elif len(a_path) - 1 == 1:
+                            temp_actions = handle_special_placement(a_path[1:], board, dim, pos)
+                            if temp_actions:
+                                final_actions += temp_actions
+                            r -= 1
+                            path = []
+                            continue
+
+
                 elif step_count == 3:
-                    step = 0
-                    pass
+                    step_count = 0
+
+                    if final_actions:
+                        a_path = a_star_search(board, final_actions[-1].c4, Coord(r - 3, pos))
+
+                        if len(a_path) - 1 == 4:
+                            final_actions.append(PlaceAction(a_path[1], a_path[2], a_path[3], a_path[4]))
+                            r -= 2
+                            path = []
+                            continue
+                        elif len(a_path) - 1 == 3:
+                            temp_actions = handle_special_placement(a_path[1:], board, dim, pos)
+                            if temp_actions:
+                                final_actions += temp_actions
+                            r -= 2
+                            path = []
+                            continue
+                        elif len(a_path) - 1 == 2:
+                            temp_actions = handle_special_placement(a_path[1:], board, dim, pos)
+                            if temp_actions:
+                                final_actions += temp_actions
+                            r -= 2
+                            path = []
+                            continue
+                        elif len(a_path) - 1 == 1:
+                            temp_actions = handle_special_placement(a_path[1:], board, dim, pos)
+                            if temp_actions:
+                                final_actions += temp_actions
+                            r -= 2
+                            path = []
+                            continue
+                        
 
             # 4 continuous placements
             if step_count == 4:
                 final_actions.append(PlaceAction(Coord(r-3, pos), Coord(r-2, pos), Coord(r-1, pos), Coord(r, pos)))
                 step_count = 0
+                path = []
+
+            r += 1
+        
+    elif dim == "row":
+        pass
 
     return final_actions

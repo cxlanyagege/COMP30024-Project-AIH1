@@ -3,10 +3,19 @@
 # Authors: He Shen, Lanruo Su
 
 
-from .core import PlayerColor, Coord, PlaceAction, Direction
+from .core import PlayerColor, Coord, PlaceAction
 from .utils import render_board
+from .a_star import a_star_search, get_heuristic
 from .placements import handle_special_placement, handle_final_placement
-from queue import PriorityQueue
+
+
+def is_complete(
+        board: dict[Coord, PlayerColor],
+        target: Coord
+        ) -> bool:
+    
+    if target not in board:
+        return True
 
 
 def find_init_row_col(
@@ -33,16 +42,6 @@ def find_init_row_col(
         return ("row", target.r)
     else:
         return ("col", target.c)
-
-
-def get_heuristic(
-        coord1: Coord, 
-        coord2: Coord
-        ) -> int:
-    
-    # Use manhattan distance as heuristic for goal cost
-    distance = abs(coord1.r - coord2.r) + abs(coord1.c - coord2.c)
-    return distance
 
 
 def sort_reds_by_distance(
@@ -88,80 +87,9 @@ def sort_reds_by_distance(
     return distances
 
 
-def get_neighbors(
-        coord: Coord, 
-        board: dict[Coord, PlayerColor], 
-        goal: Coord
-        ) -> list[Coord]:
-    
-    # Accessible neighbors of a given coordinate.
-    neighbors = []
-    for direction in [Direction.Up, 
-                      Direction.Down, 
-                      Direction.Left, 
-                      Direction.Right]:
-        
-        next_coord = coord + direction
-
-        # Only consider empty cells or goal as valid
-        if board.get(next_coord, None) == None or next_coord == goal:
-            neighbors.append(next_coord)
-
-    return neighbors
-
-
-def reconstruct_path(came_from, 
-                     start, 
-                     goal):
-    
-    # Reconstruct a path from start to goal by backtracking
-    current = goal
-    path = [current]
-
-    while current != start:
-        current = came_from[current]
-        path.append(current)
-
-    path.reverse()
-
-    return path
-
-
-def a_star_search(board: dict[Coord, PlayerColor], 
-                  start: Coord, 
-                  goal: Coord
-                  ) -> list[Coord] | None:
-    
-    open_set = PriorityQueue()
-    open_set.put((0, start))
-    came_from = {}
-    g_score = {start: 0}
-    f_score = {start: get_heuristic(start, goal)}
-
-    while not open_set.empty():
-        current = open_set.get()[1]
-
-        if current == goal:
-            path = reconstruct_path(came_from, start, goal)
-            return path
-
-        for neighbor in get_neighbors(current, board, goal):
-            tentative_g_score = g_score[current] + 1
-
-            if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
-                came_from[neighbor] = current
-                g_score[neighbor] = tentative_g_score
-                f_score[neighbor] = tentative_g_score + get_heuristic(neighbor, goal)
-                
-                if not any(neighbor == item[1] for item in open_set.queue):
-                    open_set.put((f_score[neighbor], neighbor))
-
-    # No path was found
-    return None
-
-
 def update_board(
         board: dict[Coord, PlayerColor],
+        target: Coord,
         action: PlaceAction
         ):
     
@@ -170,6 +98,9 @@ def update_board(
     board[action.c2] = PlayerColor.RED
     board[action.c3] = PlayerColor.RED
     board[action.c4] = PlayerColor.RED
+
+    # Print current board
+    print(render_board(board, target, ansi=True))
 
     board_size = 11
 
@@ -194,6 +125,7 @@ def update_board(
 def gen_place_actions(
         path: list[Coord], 
         board:dict[Coord, PlayerColor], 
+        target: Coord,
         dim: str, 
         pos: int
         ) -> list[PlaceAction]:
@@ -213,7 +145,7 @@ def gen_place_actions(
                 PlaceAction(path[i-3], path[i-2], path[i-1], path[i]))
             
             # Update board status
-            update_board(board, place_actions[-1])
+            update_board(board, target, place_actions[-1])
             
         # Stop when reaching blank edge of columm
         if dim == "col":
@@ -244,22 +176,23 @@ def gen_place_actions(
             pos)
         
         if special_actions:
-            update_board(board, special_actions[-1])
+            update_board(board, target, special_actions[-1])
         
     # Handle final placements in target row or column
-    final_actions = handle_final_placement(
-        place_actions, 
-        special_actions, 
-        board, 
-        dim, 
-        pos)
-    
-    if not final_actions:
-        return None
-    else:
-        for action in final_actions:
-            update_board(board, action)
+    if not is_complete(board, target):
+        final_actions = handle_final_placement(
+            place_actions, 
+            special_actions, 
+            board, 
+            dim, 
+            pos)
         
+        if not final_actions:
+            return None
+        else:
+            for action in final_actions:
+                update_board(board, target, action)
+    
     # Combine all placements
     place_actions = place_actions + special_actions + final_actions
 
@@ -324,7 +257,7 @@ def search(
         return None
     
     # 4. Place actions
-    place_actions = gen_place_actions(shortest_path, board, dim, pos)
+    place_actions = gen_place_actions(shortest_path, board, target, dim, pos)
 
     print(render_board(board, target, ansi=True))
 
