@@ -1,208 +1,154 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part A: Single Player Tetress
-# Authors: He Shen, Lanruo Su
-
 
 from .core import PlayerColor, Coord, PlaceAction
 from .utils import render_board
-from .a_star import a_star_search, get_heuristic
-from .placements import handle_special_placement, handle_final_placement
+from queue import PriorityQueue
+import math, time
 
 
-def is_complete(
-        board: dict[Coord, PlayerColor],
-        target: Coord
-        ) -> bool:
+def heuristic(target: Coord, board: dict[Coord, PlayerColor], board_size=11) -> int:
+    min_distance = float("inf")
+    # xx = float("inf")
+    # yy = float("inf")
+    pot = 0
+    empty_in_row, empty_in_col = board_size, board_size
+
+    for i in range(board_size):
+        if Coord(target.r, i) in board:
+            empty_in_row -= 1
+        if Coord(i, target.c) in board:
+            empty_in_col -= 1
+
+    for coord, color in board.items():
+        if color == PlayerColor.RED: 
+            dx = min(abs(target.r - coord.r), board_size - abs(target.r - coord.r))
+            dy = min(abs(target.c - coord.c), board_size - abs(target.c - coord.c))
+
+            min_distance = min(min_distance, dx + dy)
+
+            # txx = abs(abs(target.c - coord.c)- abs(board_size - abs(target.c - coord.c)))
+            # tyy = abs(abs(target.r - coord.r)- abs(board_size - abs(target.r - coord.r)))
+            # xx = min(xx, txx)
+            # yy = min(yy, tyy)
+
+    # pot = (xx + yy) / 100
+    pot = (empty_in_col + empty_in_row) / 100
+    # pot = (dx + dy) / 100
+                
+    heuristic_cost = (min(empty_in_row, empty_in_col) + min_distance) * pot
+    return heuristic_cost if heuristic_cost != float("inf") else 0
+
+
+def generate_successor_actions(board: dict, target:Coord, board_size=11) -> list:
+    successors = []
     
-    if target not in board:
-        return True
+    for x in range(board_size):
+        for y in range(board_size):
+            base_coord = Coord(x, y)
+            all_tetrominos = get_all_tetrominoes(base_coord)
+            for shape, tetromino_coords in all_tetrominos:
+                action = PlaceAction(*tetromino_coords)
+                if is_valid_place_action(board, action):
+                    successors.append((shape, action))
+    return successors
 
 
-def find_init_row_col(
-        board: dict[Coord, PlayerColor], 
-        target: Coord
-        ) -> tuple[str, int]:
-    
-    row_empty_spaces = 0
-    col_empty_spaces = 0
-    board_size = 11
-
-    # Count empty spaces in the target's row
-    for c in range(board_size):
-        if Coord(target.r, c) not in board:
-            row_empty_spaces += 1
-
-    # Count empty spaces in the target's column
-    for r in range(board_size):
-        if Coord(r, target.c) not in board:
-            col_empty_spaces += 1
-
-    # Determine which dimension has fewer empty spaces and return it
-    if row_empty_spaces < col_empty_spaces:
-        return ("row", target.r)
-    else:
-        return ("col", target.c)
+def adjust_coord(r, c):
+    if r < 0:
+        r += 11
+    elif r >= 11:
+        r -= 11
+    if c < 0:
+        c += 11
+    elif c >= 11:
+        c -= 11
+    return r, c
 
 
-def sort_reds_by_distance(
-        board: dict[Coord, PlayerColor],
-        dimension: str, 
-        position: int
-        ) -> list[Coord]:
-    
-    empty_spaces = []
-    distances = []
+def get_all_tetrominoes(base_coord: Coord) -> list:
+    tetrominoes = []
+    shapes = {
+        "I": [((0, 0), (1, 0), (2, 0), (3, 0)), ((0, 0), (0, 1), (0, 2), (0, 3))],
+        "O": [((0, 0), (0, 1), (1, 0), (1, 1))],
+        "T": [
+            ((0, 0), (0, 1), (0, 2), (1, 1)),
+            ((0, 0), (1, 0), (2, 0), (-1, 1)),
+            ((0, 0), (0, 1), (0, 2), (-1, 1)),
+            ((0, 0), (1, 0), (2, 0), (1, 1)),
+        ],
+        "J": [
+            ((0, 0), (1, 0), (2, 0), (2, -1)),
+            ((0, 0), (1, 0), (2, 0), (0, 1)),
+            ((0, 0), (0, 1), (0, 2), (-1, 0)),
+            ((0, 0), (0, 1), (0, 2), (1, 2)),
+        ],
+        "L": [
+            ((0, 0), (1, 0), (2, 0), (2, 1)),
+            ((0, 0), (1, 0), (2, 0), (0, -1)),
+            ((0, 0), (0, 1), (0, 2), (1, 0)),
+            ((0, 0), (0, 1), (0, 2), (-1, 2)),
+        ],
+        "Z": [((0, 0), (0, 1), (1, 1), (1, 2)), ((0, 0), (0, 1), (1, 0), (-1, 1))],
+        "S": [((0, 0), (0, 1), (-1, 1), (-1, 2)), ((0, 0), (0, 1), (-1, 0), (1, 1))],
+    }
 
-    # Collect empty cells in targeted row or column
-    if dimension == "row":
-        for c in range(11):
-            if Coord(position, c) not in board:
-                empty_spaces.append(Coord(position, c))
-    elif dimension == "col":
-        for r in range(11):
-            if Coord(r, position) not in board:
-                empty_spaces.append(Coord(r, position))
+    for shape, rotations in shapes.items():
+        for rotation in rotations:
+            adjusted_coords = []
+            for dr, dy in rotation:
+                r, c = adjust_coord(base_coord.r + dr, base_coord.c + dy)
+                adjusted_coords.append(Coord(r, c))
+            tetrominoes.append((shape, adjusted_coords))
 
-    # Calculate distance between red blocks and empty cells
-    for coord, player in board.items():
-        if player == PlayerColor.RED:
-
-            # Count total empty cells on the row and column
-            total_empty = 0
-            for i in range(11):
-                if Coord(i, coord.c) not in board:
-                    total_empty += 1
-            for j in range(11):
-                if Coord(coord.r, j) not in board:
-                    total_empty += 1
-
-            # Append tuple with distance and empty cell
-            for empty_space in empty_spaces:
-                distance = get_heuristic(coord, empty_space)
-                distances.append((coord, distance, empty_space, total_empty))
-
-    # Sort by distance size
-    distances.sort(key=lambda x: (x[1], -x[3]))
-
-    return distances
+    return tetrominoes
 
 
-def update_board(
-        board: dict[Coord, PlayerColor],
-        target: Coord,
-        action: PlaceAction
-        ):
-    
-    # Set Tetromino coordinates to red
-    board[action.c1] = PlayerColor.RED
-    board[action.c2] = PlayerColor.RED
-    board[action.c3] = PlayerColor.RED
-    board[action.c4] = PlayerColor.RED
+def apply_place_action(board: dict[Coord, PlayerColor], action: PlaceAction) -> dict:
+    new_board = dict(board) 
 
-    # Print current board
-    print(render_board(board, target, ansi=True))
+    for coord in action.coords:
+        new_board[coord] = PlayerColor.RED
 
-    board_size = 11
+    rows, cols = set(), set()
+    for coord in action.coords:
+        rows.add(coord.r)
+        cols.add(coord.c)
 
-    # Search for filled rows and columns
-    filled_rows = set()
-    filled_cols = set()
+    for row1 in rows:
+        if all(Coord(row1, col1) in new_board for col1 in range(11)):
+            for col11 in range(11):
+                del new_board[Coord(row1, col11)]
+                # print(render_board(new_board, Coord(row1, col11), ansi=True))
 
-    for r in range(board_size):
-        if all(Coord(r, c) in board for c in range(board_size)):
-            filled_rows.add(r)
+    for col2 in cols:
+        if all(Coord(row2, col2) in new_board for row2 in range(11)):
+            for row21 in range(11):
+                del new_board[Coord(row21, col2)]
+                # print(render_board(new_board, Coord(row21, col2), ansi=True))
 
-    for c in range(board_size):
-        if all(Coord(r, c) in board for r in range(board_size)):
-            filled_cols.add(c)
-
-    # Eliminate filled rows and columns
-    for coord in list(board.keys()):
-        if coord.r in filled_rows or coord.c in filled_cols:
-            del board[coord]
-  
-
-def gen_place_actions(
-        path: list[Coord], 
-        board:dict[Coord, PlayerColor], 
-        target: Coord,
-        dim: str, 
-        pos: int
-        ) -> list[PlaceAction]:
-    
-    i = 1
-    step_counter = 0
-    place_actions = []
-    special_actions = []
-    final_actions = []
-
-    for i in range(1, len(path) - 1):
-        step_counter += 1
-
-        # Generate 4-continuous place actions
-        if step_counter % 4 == 0:
-            place_actions.append(
-                PlaceAction(path[i-3], path[i-2], path[i-1], path[i]))
-            
-            # Update board status
-            update_board(board, target, place_actions[-1])
-            
-        # Stop when reaching blank edge of columm
-        if dim == "col":
-
-            # Current position is at the edge of the column
-            if abs(path[i].c - pos) == 1 or abs(path[i].c - pos) == 10:
-
-                # check if neighbor is empty or not
-                if Coord(path[i].r, pos) not in board:
-                    break
-
-        # Or stop when reaching blank edge of row
-        elif dim == "row":
-
-            # Current position is at the edge of the row
-            if abs(path[i].r - pos) == 1 or abs(path[i].r - pos) == 10:
-
-                # check if neighbor is empty or not
-                if Coord(pos, path[i].c) not in board:
-                    break
-
-    # Handle special placement when there are remaining steps
-    if i > 1:
-        special_actions = handle_special_placement(
-            path[i - (step_counter % 4) + 1: i + 1],
-            board,
-            dim,
-            pos)
-        
-        if special_actions:
-            update_board(board, target, special_actions[-1])
-        
-    # Handle final placements in target row or column
-    if not is_complete(board, target):
-        final_actions = handle_final_placement(
-            place_actions, 
-            special_actions, 
-            board, 
-            dim, 
-            pos)
-        
-        if not final_actions:
-            return None
-        else:
-            for action in final_actions:
-                update_board(board, target, action)
-    
-    # Combine all placements
-    place_actions = place_actions + special_actions + final_actions
-
-    return place_actions
+    return new_board
 
 
-def search(
-        board: dict[Coord, PlayerColor], 
-        target: Coord
-        ) -> list[PlaceAction] | None:
+def is_valid_place_action(board: dict[Coord, PlayerColor], action: PlaceAction) -> bool:
+    for coord in action.coords:
+        if coord in board:
+            return False
+
+    if board:  
+        adjacent_to_red = False
+        for coord in action.coords:
+            for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+                nr, nc = adjust_coord(coord.r + dr, coord.c + dc)
+                neighbor = Coord(nr, nc)
+                if neighbor in board and board[neighbor] == PlayerColor.RED:
+                    adjacent_to_red = True
+                    return adjacent_to_red
+
+    return adjacent_to_red
+
+
+def search(board: dict[Coord, PlayerColor], target: Coord) -> list[PlaceAction] | None:
     """
     This is the entry point for your submission. You should modify this
     function to solve the search problem discussed in the Part A specification.
@@ -211,9 +157,9 @@ def search(
     Parameters:
         `board`: a dictionary representing the initial board state, mapping
             coordinates to "player colours". The keys are `Coord` instances,
-            and the values are `PlayerColor` instances.  
+            and the values are `PlayerColor` instances.
         `target`: the target BLUE coordinate to remove from the board.
-    
+
     Returns:
         A list of "place actions" as PlaceAction instances, or `None` if no
         solution is possible.
@@ -223,45 +169,58 @@ def search(
     # board state in a human-readable format. If your terminal supports ANSI
     # codes, set the `ansi` flag to True to print a colour-coded version!
     print(render_board(board, target, ansi=True))
+    start_time = time.time()
 
-    # Some impressive AI stuff here to find the solution...
-    
-    # 1. Choose row/column with the least blank cells
-    dim, pos = find_init_row_col(board, target)
+    # Do some impressive AI stuff here to find the solution...
+    # ...
+    # ... (your solution goes here!)
+    # ...
+    frontier = PriorityQueue()
+    count = 0
+    frontier.put(
+        (0, 0, count := count + 1, [], board)
+    )  
+    visited = set()
 
-    # 2. Use heuristic to sort red blocks by distance to empty cells
-    red_blocks = sort_reds_by_distance(board, dim, pos)
+    while not frontier.empty():
+        total_cost, cost, _, actions, current_board = frontier.get()
+        
+        successors = generate_successor_actions(current_board, target)
 
-    if not red_blocks:
-        return None
+        for shape, action in successors:
+            if not is_valid_place_action(current_board, action):
+                continue
+            new_board = apply_place_action(current_board, action)
+            # new_actions = actions + [(shape, action)]
+            new_actions = actions + [action]
 
-    # 3. Use A* to generate path to nearest empty cell
-    can_generate = False
-    shortest_path = []
+            if target not in new_board:
+                print(render_board(new_board, target, ansi=True))
+                end_time = time.time()
+                total_time = end_time - start_time
+                print(f"Total running time: {total_time} seconds\n")
 
-    for red_block in red_blocks:
-        start, distance, goal, total = red_block
-        path = a_star_search(board, start, goal)
+                return new_actions
 
-        # Check if path is valid and no new shortest path is found
-        if path and not shortest_path:
-            can_generate = True
-            shortest_path = path
+            board_state_key = frozenset(
+                new_board.items()
+            ) 
+            if board_state_key in visited:
+                continue
+            visited.add(board_state_key)
 
-        # Check if there are unreachable empty cells on target row or column
-        if not path and can_generate:
-            can_generate = False
-            break
+            g = cost + 1 
+            h_cost = heuristic(target, new_board) 
+            # print(h_cost, new_actions)
+            frontier.put((g + h_cost, g, count := count + 1, new_actions, new_board))
 
-    if not can_generate:
-        return None
-    
-    # 4. Place actions
-    place_actions = gen_place_actions(shortest_path, board, target, dim, pos)
+    end_time = time.time()
+    total_time = end_time - start_time
+    print(f"Total running time: {total_time} seconds\n")
 
-    print(render_board(board, target, ansi=True))
+    return None
 
-    if not place_actions:
-        return None
-
-    return place_actions
+    # Here we're returning "hardcoded" actions as an example of the expected
+    # output format. Of course, you should instead return the result of your
+    # search algorithm. Remember: if no solution is possible for a given input,
+    # return `None` instead of a list.
