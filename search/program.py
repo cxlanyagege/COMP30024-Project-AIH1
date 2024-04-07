@@ -4,7 +4,7 @@
 from .core import PlayerColor, Coord, PlaceAction
 from .utils import render_board
 from queue import PriorityQueue
-import math, time
+import time
 
 
 def heuristic(target: Coord, board: dict[Coord, PlayerColor], board_size=11) -> int:
@@ -73,7 +73,7 @@ def get_all_tetrominoes(base_coord: Coord) -> list:
         "O": [((0, 0), (0, 1), (1, 0), (1, 1))],
         "T": [
             ((0, 0), (0, 1), (0, 2), (1, 1)),
-            ((0, 0), (1, 0), (2, 0), (-1, 1)),
+            ((0, 0), (1, 0), (2, 0), (1, -1)),
             ((0, 0), (0, 1), (0, 2), (-1, 1)),
             ((0, 0), (1, 0), (2, 0), (1, 1)),
         ],
