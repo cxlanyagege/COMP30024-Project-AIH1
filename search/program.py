@@ -1,5 +1,6 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part A: Single Player Tetress
+# Team: AIH1
 # Author: He Shen, Lanruo Su
 
 

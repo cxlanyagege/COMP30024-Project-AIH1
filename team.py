@@ -16,7 +16,7 @@ metadata = {
     # be exactly two members in the list. 
     "team_members": [
         {
-            "name": "Ruolan Su",
+            "name": "Lanruo Su",
             "student_id": "1297549",
             "email": "lanruos@student.unimelb.edu.au" # Must be @student.unimelb.edu.au address
         },
