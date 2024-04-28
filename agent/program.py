@@ -1,7 +1,7 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing Agent
 
-from referee.game import PlayerColor, Action, PlaceAction, Coord
+from referee.game import PlayerColor, Action, PlaceAction, Coord, board
 
 
 class Agent:
@@ -15,12 +15,17 @@ class Agent:
         This constructor method runs when the referee instantiates the agent.
         Any setup and/or precomputation should be done here.
         """
+
+        # Record the color of the agent
         self._color = color
         match color:
             case PlayerColor.RED:
                 print("Testing: I am playing as RED")
             case PlayerColor.BLUE:
                 print("Testing: I am playing as BLUE")
+
+        # Establish the board state
+        self.board = board.Board()
 
     def action(self, **referee: dict) -> Action:
         """
@@ -59,6 +64,9 @@ class Agent:
         # There is only one action type, PlaceAction
         place_action: PlaceAction = action
         c1, c2, c3, c4 = place_action.coords
+
+        # Update applying the action to the board
+        self.board.apply_action(action)
 
         # Here we are just printing out the PlaceAction coordinates for
         # demonstration purposes. You should replace this with your own logic
