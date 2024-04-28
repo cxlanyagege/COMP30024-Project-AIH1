@@ -10,38 +10,22 @@ import random
 
 
 def heuristic(
-        target: Coord, 
         board: dict[Coord, PlayerColor], 
+        color: PlayerColor,
         board_size = 11
-        ) -> int:
+        ) -> float:
+    
+    # Calculate the heuristic value of the board
+    red_actions = generate_successor_actions(board, PlayerColor.RED)
+    blue_actions = generate_successor_actions(board, PlayerColor.BLUE)
+    red_score = len(red_actions)
+    blue_score = len(blue_actions)
 
-    # Set the initial value of minimal cost to infinity
-    min_distance = float("inf")
-    empty_in_row, empty_in_col = board_size, board_size
-
-    # Count empty cells in goal's row and column
-    for i in range(board_size):
-        if Coord(target.r, i) in board:
-            empty_in_row -= 1
-        if Coord(i, target.c) in board:
-            empty_in_col -= 1
-
-    # Set precentage ratio on empty counts
-    ratio = (empty_in_col + empty_in_row) / 100
-
-    # Calculate the Manhattan distance between the target and the red cell
-    for coord, color in board.items():
-        if color == PlayerColor.RED: 
-            dx = min(abs(target.r - coord.r), board_size - abs(target.r - coord.r))
-            dy = min(abs(target.c - coord.c), board_size - abs(target.c - coord.c))
-
-            # Record the minimal distance
-            min_distance = min(min_distance, dx + dy)
-
-    # Calculate the heuristic cost (raw heuristic_cost * ratio)     
-    heuristic_cost = (min(empty_in_row, empty_in_col) + min_distance) * ratio
-
-    return heuristic_cost if heuristic_cost != float("inf") else 0
+    # Return the heuristic value depending on player's color
+    if color == PlayerColor.RED:
+        return red_score - blue_score
+    else:
+        return blue_score - red_score
 
 
 def generate_random_action(
@@ -148,39 +132,6 @@ def get_all_tetrominoes(base_coord: Coord) -> list:
             tetrominoes.append((shape, adjusted_coords))
 
     return tetrominoes
-
-
-def apply_place_action(
-        board: dict[Coord, PlayerColor], 
-        action: PlaceAction
-        ) -> dict:
-    
-    # Create a new board with the action applied
-    new_board = dict(board) 
-
-    # Update the board with the new action
-    for coord in action.coords:
-        new_board[coord] = PlayerColor.RED
-
-    # Remove the row and column if all cells are filled
-    rows, cols = set(), set()
-    for coord in action.coords:
-        rows.add(coord.r)
-        cols.add(coord.c)
-
-    # Remove the row
-    for row1 in rows:
-        if all(Coord(row1, col1) in new_board for col1 in range(11)):
-            for col11 in range(11):
-                del new_board[Coord(row1, col11)]
-
-    # Remove the column
-    for col2 in cols:
-        if all(Coord(row2, col2) in new_board for row2 in range(11)):
-            for row21 in range(11):
-                del new_board[Coord(row21, col2)]
-
-    return new_board
 
 
 def is_valid_place_action(
