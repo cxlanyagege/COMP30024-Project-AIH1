@@ -44,6 +44,20 @@ def heuristic(
     return heuristic_cost if heuristic_cost != float("inf") else 0
 
 
+def generate_random_action(
+        board_size = 11
+        ) -> Action:
+    
+    # Generate a random action
+    base_coord = Coord(random.randint(0, board_size-1), 
+                       random.randint(0, board_size-1))
+    all_tetrominos = get_all_tetrominoes(base_coord)
+    shape, tetromino_coords = random.choice(all_tetrominos)
+    action = PlaceAction(*tetromino_coords)
+
+    return action
+
+
 def generate_successor_actions(
         board: dict, 
         color: PlayerColor,
@@ -55,11 +69,15 @@ def generate_successor_actions(
     # Generate all possible tetrominos
     if board.turn_count < 2:
         # Random generate in first turn
-        base_coord = Coord(random.randint(0, board_size-1), 
-                           random.randint(0, board_size-1))
-        all_tetrominos = get_all_tetrominoes(base_coord)
-        shape, tetromino_coords = random.choice(all_tetrominos)
-        action = PlaceAction(*tetromino_coords)
+        is_valid = False
+        while not is_valid:
+            action = generate_random_action()
+            for coord in action.coords:
+                if board[coord].player == None:
+                    is_valid = True
+                else:
+                    is_valid = False
+                    break
         successors.append(action)
     else:
         for x in range(board_size):
