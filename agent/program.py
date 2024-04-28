@@ -6,6 +6,8 @@
 from referee.game import PlayerColor, Action, PlaceAction, Coord, board
 from .utils import heuristic, generate_successor_actions
 
+import random
+
 
 class Agent:
     """
@@ -45,9 +47,25 @@ class Agent:
 
         # Generate possible action list
         actions = generate_successor_actions(self.board, self._color)
+        best_actions = []
+        best_action_score = float("-inf")
+
+        # Find optimal action
+        for action in actions:
+            self.board.apply_action(action)
+
+            action_score = 1
+
+            self.board.undo_action()
+
+            if action_score > best_action_score:
+                best_actions = [action]
+                best_action_score = action_score
+            elif action_score == best_action_score:
+                best_actions.append(action)
         
         # Return place action
-        return actions[0]
+        return random.choice(best_actions)
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         """

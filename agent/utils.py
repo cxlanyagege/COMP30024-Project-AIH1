@@ -2,7 +2,7 @@
 # Project Part B: Game Playing Agent
 # Team: AIH1
 # Author: He Shen, Lanruo Su
-# Description: Helper functions written in A1
+# Description: Functions written in A1 with some modifications
 
 from referee.game import PlayerColor, Action, PlaceAction, Coord
 
