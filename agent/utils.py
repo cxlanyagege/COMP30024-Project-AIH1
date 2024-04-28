@@ -11,21 +11,27 @@ import random
 
 def heuristic(
         board: dict[Coord, PlayerColor], 
-        color: PlayerColor
+        color: PlayerColor,
+        actions: list[Action],
+        skip_color: PlayerColor
         ) -> float:
     
     # Calculate the heuristic value of the board
-    red_actions = generate_successor_actions(board, PlayerColor.RED)
-    blue_actions = generate_successor_actions(board, PlayerColor.BLUE)
+    if skip_color == PlayerColor.RED:
+        red_actions = actions
+        blue_actions = generate_successor_actions(board, PlayerColor.BLUE)
+    elif skip_color == PlayerColor.BLUE:
+        red_actions = generate_successor_actions(board, PlayerColor.RED)
+        blue_actions = actions
     red_score = len(red_actions)
     blue_score = len(blue_actions)
 
     # Return the heuristic value depending on player's color
     if color == PlayerColor.RED:
-        # print(red_score - blue_score)
+        print(red_score - blue_score)
         return red_score - blue_score
     elif color == PlayerColor.BLUE:
-        # print(blue_score - red_score)
+        print(blue_score - red_score)
         return blue_score - red_score
 
 

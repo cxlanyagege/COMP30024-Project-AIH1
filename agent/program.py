@@ -104,7 +104,7 @@ class Agent:
         actions = generate_successor_actions(self.board, color)
 
         # Get current heuristic score
-        heuristic_score = heuristic(self.board, self._color)
+        heuristic_score = heuristic(self.board, self._color, actions, color)
 
         # Check if the game is over
         if self.board.winner_color == self._color:
