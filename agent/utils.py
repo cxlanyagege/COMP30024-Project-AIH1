@@ -44,7 +44,7 @@ def heuristic(
 
 def generate_successor_actions(
         board: dict, 
-        target:Coord, 
+        color: PlayerColor,
         board_size = 11
         ) -> list:
     
@@ -57,7 +57,7 @@ def generate_successor_actions(
             all_tetrominos = get_all_tetrominoes(base_coord)
             for shape, tetromino_coords in all_tetrominos:
                 action = PlaceAction(*tetromino_coords)
-                if is_valid_place_action(board, action):
+                if is_valid_place_action(board, action, color):
                     successors.append((shape, action))
                     
     return successors
@@ -156,23 +156,25 @@ def apply_place_action(
 
 def is_valid_place_action(
         board: dict[Coord, PlayerColor], 
-        action: PlaceAction
+        action: PlaceAction,
+        color: PlayerColor
         ) -> bool:
     
     # Check if the action is valid
     for coord in action.coords:
+        print(coord)
         if coord in board:
             return False
 
     # Check if the action is adjacent to red
     if board:  
-        adjacent_to_red = False
+        adjacent_to = False
         for coord in action.coords:
             for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
                 nr, nc = adjust_coord(coord.r + dr, coord.c + dc)
                 neighbor = Coord(nr, nc)
-                if neighbor in board and board[neighbor] == PlayerColor.RED:
-                    adjacent_to_red = True
-                    return adjacent_to_red
+                if neighbor in board and board[neighbor] == color:
+                    adjacent_to = True
+                    return adjacent_to
 
-    return adjacent_to_red
+    return adjacent_to

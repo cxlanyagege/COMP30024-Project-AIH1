@@ -23,9 +23,9 @@ class Agent:
         self._color = color
         match color:
             case PlayerColor.RED:
-                print("Testing: I am playing as RED")
+                print("RED Agent: I am playing as RED")
             case PlayerColor.BLUE:
-                print("Testing: I am playing as BLUE")
+                print("BLUE Agent: I am playing as BLUE")
 
         # Establish the board state
         self.board = board.Board()
@@ -44,7 +44,9 @@ class Agent:
                 opponent_color = PlayerColor.RED
 
         # Generate possible action list
+        actions = generate_successor_actions(self.board, self._color)
 
+        print(actions)
         
         # Return place action
         return PlaceAction(
@@ -68,4 +70,4 @@ class Agent:
         self.board.apply_action(action)
 
         # Display placing log
-        print(f"{self._color} agent acknowledged: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
+        print(f"{self._color} Agent acknowledged: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
