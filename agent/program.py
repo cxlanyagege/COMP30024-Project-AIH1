@@ -1,7 +1,10 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing Agent
+# Team: AIH1
+# Author: He Shen, Lanruo Su
 
 from referee.game import PlayerColor, Action, PlaceAction, Coord, board
+from .utils import heuristic, generate_successor_actions
 
 
 class Agent:
@@ -33,26 +36,22 @@ class Agent:
         to take an action. It must always return an action object. 
         """
 
-        # Below we have hardcoded two actions to be played depending on whether
-        # the agent is playing as BLUE or RED. Obviously this won't work beyond
-        # the initial moves of the game, so you should use some game playing
-        # technique(s) to determine the best action to take.
+        # Set opponent's color
         match self._color:
             case PlayerColor.RED:
-                print("Testing: RED is playing a PLACE action")
-                return PlaceAction(
+                opponent_color = PlayerColor.BLUE
+            case PlayerColor.BLUE:
+                opponent_color = PlayerColor.RED
+
+        # Generate possible action list
+
+        
+        # Return place action
+        return PlaceAction(
                     Coord(3, 3), 
                     Coord(3, 4), 
                     Coord(4, 3), 
                     Coord(4, 4)
-                )
-            case PlayerColor.BLUE:
-                print("Testing: BLUE is playing a PLACE action")
-                return PlaceAction(
-                    Coord(2, 3), 
-                    Coord(2, 4), 
-                    Coord(2, 5), 
-                    Coord(2, 6)
                 )
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
@@ -68,7 +67,5 @@ class Agent:
         # Update applying the action to the board
         self.board.apply_action(action)
 
-        # Here we are just printing out the PlaceAction coordinates for
-        # demonstration purposes. You should replace this with your own logic
-        # to update your agent's internal game state representation.
-        print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
+        # Display placing log
+        print(f"{self._color} agent acknowledged: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
