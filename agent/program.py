@@ -45,16 +45,9 @@ class Agent:
 
         # Generate possible action list
         actions = generate_successor_actions(self.board, self._color)
-
-        print(actions)
         
         # Return place action
-        return PlaceAction(
-                    Coord(3, 3), 
-                    Coord(3, 4), 
-                    Coord(4, 3), 
-                    Coord(4, 4)
-                )
+        return actions[0]
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         """
