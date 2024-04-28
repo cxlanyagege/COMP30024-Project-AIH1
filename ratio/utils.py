@@ -15,7 +15,7 @@ def heuristic(
         actions: list[Action],
         skip_color: PlayerColor,
         prev_actions: list[Action]
-        ) -> int:
+        ) -> float:
     
     # Calculate the heuristic value of the board
     if skip_color == PlayerColor.RED:
@@ -57,6 +57,8 @@ def generate_successor_actions(
         ) -> list:
     
     successors = []
+    total_count = 0
+    valid_count = 0
 
     # Generate all possible tetrominos
     if board.turn_count < 2:
@@ -70,6 +72,8 @@ def generate_successor_actions(
                 else:
                     is_valid = False
                     break
+        total_count += 1
+        valid_count += 1
         successors.append(action)
     else:
         for x in range(board_size):
@@ -80,8 +84,10 @@ def generate_successor_actions(
                     action = PlaceAction(*tetromino_coords)
                     if is_valid_place_action(board, action, color):
                         successors.append(action)
+                        valid_count += 1
+                    total_count += 1
                     
-    return successors
+    return successors, valid_count / total_count
 
 
 def adjust_coord(r, c):

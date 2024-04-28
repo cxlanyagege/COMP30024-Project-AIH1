@@ -48,12 +48,14 @@ class Agent:
                 opponent = PlayerColor.RED
 
         # Generate possible action list
-        actions = generate_successor_actions(self.board, self._color)
+        actions, ratio = generate_successor_actions(self.board, self._color)
         best_actions = []
         best_action_score = float("-inf")
 
         # Dynamic distributing depth
-        if 50 <= self.board.turn_count < 100:
+        if 2 <= self.board.turn_count < 50:
+            self.max_depth = 1
+        elif 50 <= self.board.turn_count < 100:
             self.max_depth = 2
         elif 100 <= self.board.turn_count < 150:
             self.max_depth = 3
@@ -99,7 +101,8 @@ class Agent:
                 opponent = PlayerColor.RED
 
         # Generate possible action list
-        actions = generate_successor_actions(self.board, color)
+        actions, ratio = generate_successor_actions(self.board, color)
+        print(ratio)
 
         # Check if the game is over
         if self.board.winner_color == self._color:
@@ -109,7 +112,7 @@ class Agent:
         
         # Check if the search depth is reached
         if depth == self.max_depth:
-            return heuristic(self.board, self._color, actions, color, prev_actions)
+            return -ratio
 
         if color == self._color:
             for action in actions:
