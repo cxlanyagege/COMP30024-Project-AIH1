@@ -13,15 +13,16 @@ def heuristic(
         board: dict[Coord, PlayerColor], 
         color: PlayerColor,
         actions: list[Action],
-        skip_color: PlayerColor
+        skip_color: PlayerColor,
+        prev_actions: list[Action]
         ) -> float:
     
     # Calculate the heuristic value of the board
     if skip_color == PlayerColor.RED:
         red_actions = actions
-        blue_actions = generate_successor_actions(board, PlayerColor.BLUE)
+        blue_actions = prev_actions
     elif skip_color == PlayerColor.BLUE:
-        red_actions = generate_successor_actions(board, PlayerColor.RED)
+        red_actions = prev_actions
         blue_actions = actions
     red_score = len(red_actions)
     blue_score = len(blue_actions)

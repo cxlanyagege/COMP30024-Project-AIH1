@@ -65,7 +65,7 @@ class Agent:
 
             # Calculate the score of the action
             self.board.apply_action(action)
-            action_score = self.search(1, opponent, float("-inf"), float("inf"), action)
+            action_score = self.search(1, opponent, float("-inf"), float("inf"), actions)
             self.board.undo_action()
 
             # Update the best action
@@ -84,7 +84,7 @@ class Agent:
             color: PlayerColor,
             alpha: float,
             beta: float,
-            action: Action
+            prev_actions: list[Action]
             ) -> float:
         
         """
@@ -103,9 +103,6 @@ class Agent:
         # Generate possible action list
         actions = generate_successor_actions(self.board, color)
 
-        # Get current heuristic score
-        heuristic_score = heuristic(self.board, self._color, actions, color)
-
         # Check if the game is over
         if self.board.winner_color == self._color:
             return float("inf")
@@ -114,14 +111,14 @@ class Agent:
         
         # Check if the search depth is reached
         if depth == self.max_depth:
-            return heuristic_score
+            return heuristic(self.board, self._color, actions, color, prev_actions)
 
         if color == self._color:
             for action in actions:
 
                 # Apply the action to the board
                 self.board.apply_action(action)
-                score = self.search(depth + 1, opponent, alpha, beta, action)
+                score = self.search(depth + 1, opponent, alpha, beta, actions)
                 self.board.undo_action()
 
                 # Update alpha
@@ -137,7 +134,7 @@ class Agent:
 
                 # Apply the action to the board
                 self.board.apply_action(action)
-                score = self.search(depth + 1, self._color, alpha, beta, action)
+                score = self.search(depth + 1, self._color, alpha, beta, actions)
                 self.board.undo_action()
 
                 # Update beta
