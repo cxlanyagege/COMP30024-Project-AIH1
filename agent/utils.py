@@ -11,8 +11,7 @@ import random
 
 def heuristic(
         board: dict[Coord, PlayerColor], 
-        color: PlayerColor,
-        board_size = 11
+        color: PlayerColor
         ) -> float:
     
     # Calculate the heuristic value of the board
@@ -23,8 +22,10 @@ def heuristic(
 
     # Return the heuristic value depending on player's color
     if color == PlayerColor.RED:
+        # print(red_score - blue_score)
         return red_score - blue_score
-    else:
+    elif color == PlayerColor.BLUE:
+        # print(blue_score - red_score)
         return blue_score - red_score
 
 

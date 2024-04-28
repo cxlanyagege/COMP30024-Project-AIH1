@@ -53,10 +53,12 @@ class Agent:
         best_action_score = float("-inf")
 
         # Dynamic distributing depth
-        if 50 <= self.board.turn_count < 100:
+        if 2 <= self.board.turn_count < 50:
             self.max_depth = 2
-        elif 100 <= self.board.turn_count < 150:
+        elif 50 <= self.board.turn_count < 100:
             self.max_depth = 3
+        elif 100 <= self.board.turn_count < 150:
+            self.max_depth = 4
 
         # Find optimal action
         for action in actions:
@@ -92,23 +94,27 @@ class Agent:
         """
         
         # Set opponent's color
-        match color:
+        match self._color:
             case PlayerColor.RED:
                 opponent = PlayerColor.BLUE
             case PlayerColor.BLUE:
                 opponent = PlayerColor.RED
 
+        # Generate possible action list
+        actions = generate_successor_actions(self.board, color)
+
+        # Get current heuristic score
+        heuristic_score = heuristic(self.board, self._color)
+
         # Check if the game is over
-        if self.board.game_over:
-            if self._color == opponent:
-                return float("inf")
+        if self.board.winner_color == self._color:
+            return float("inf")
+        elif self.board.winner_color == opponent:
+            return float("-inf")
         
         # Check if the search depth is reached
         if depth == self.max_depth:
-            return heuristic(self.board, color)
-        
-        # Generate possible action list
-        actions = generate_successor_actions(self.board, color)
+            return heuristic_score
 
         if color == self._color:
             for action in actions:
@@ -122,7 +128,7 @@ class Agent:
                 alpha = max(alpha, score)
 
                 # Prune the search tree
-                if alpha > beta:
+                if alpha >= beta:
                     return alpha
 
             return alpha
@@ -131,7 +137,7 @@ class Agent:
 
                 # Apply the action to the board
                 self.board.apply_action(action)
-                score = self.search(depth + 1, opponent, alpha, beta, action)
+                score = self.search(depth + 1, self._color, alpha, beta, action)
                 self.board.undo_action()
 
                 # Update beta
