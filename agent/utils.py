@@ -52,24 +52,24 @@ def generate_successor_actions(
     
     successors = []
 
-    # Random generate in first turn
+    # Generate all possible tetrominos
     if board.turn_count < 2:
+        # Random generate in first turn
         base_coord = Coord(random.randint(0, board_size-1), 
                            random.randint(0, board_size-1))
         all_tetrominos = get_all_tetrominoes(base_coord)
         shape, tetromino_coords = random.choice(all_tetrominos)
         action = PlaceAction(*tetromino_coords)
         successors.append(action)
-    
-    # Generate all possible tetrominos
-    for x in range(board_size):
-        for y in range(board_size):
-            base_coord = Coord(x, y)
-            all_tetrominos = get_all_tetrominoes(base_coord)
-            for shape, tetromino_coords in all_tetrominos:
-                action = PlaceAction(*tetromino_coords)
-                if is_valid_place_action(board, action, color):
-                    successors.append(action)
+    else:
+        for x in range(board_size):
+            for y in range(board_size):
+                base_coord = Coord(x, y)
+                all_tetrominos = get_all_tetrominoes(base_coord)
+                for shape, tetromino_coords in all_tetrominos:
+                    action = PlaceAction(*tetromino_coords)
+                    if is_valid_place_action(board, action, color):
+                        successors.append(action)
                     
     return successors
 
@@ -173,17 +173,17 @@ def is_valid_place_action(
     
     # Check if the action is valid
     for coord in action.coords:
-        if board[coord]:
+        if board[coord].player != None:
             return False
 
-    # Check if the action is adjacent to red
+    # Check if the action is adjacent to current color
     if board:  
         adjacent_to = False
         for coord in action.coords:
             for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
                 nr, nc = adjust_coord(coord.r + dr, coord.c + dc)
                 neighbor = Coord(nr, nc)
-                if board[neighbor] and board[neighbor] == color:
+                if board[neighbor].player == color:
                     adjacent_to = True
                     return adjacent_to
 

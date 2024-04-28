@@ -39,9 +39,9 @@ class Agent:
         # Set opponent's color
         match self._color:
             case PlayerColor.RED:
-                opponent_color = PlayerColor.BLUE
+                opponent = PlayerColor.BLUE
             case PlayerColor.BLUE:
-                opponent_color = PlayerColor.RED
+                opponent = PlayerColor.RED
 
         # Generate possible action list
         actions = generate_successor_actions(self.board, self._color)
