@@ -54,11 +54,11 @@ class Agent:
 
         # Dynamic distributing depth
         if 2 <= self.board.turn_count < 50:
-            self.max_depth = 2
+            self.max_depth = 1
         elif 50 <= self.board.turn_count < 100:
-            self.max_depth = 3
+            self.max_depth = 2
         elif 100 <= self.board.turn_count < 150:
-            self.max_depth = 4
+            self.max_depth = 3
 
         # Find optimal action
         for action in actions:
