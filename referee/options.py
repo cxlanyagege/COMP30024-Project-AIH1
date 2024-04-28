@@ -209,7 +209,7 @@ def get_options():
     elif args.colourless:
         args.use_colour = False
     else:
-        args.use_colour = sys.stdout.isatty() and sys.platform != "win32"
+        args.use_colour = sys.stdout.isatty()
     del args.colour, args.colourless # type: ignore
     # unicode, ascii => force display mode unicode or ascii, else auto-detect
     if args.unicode:
