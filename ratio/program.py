@@ -102,7 +102,6 @@ class Agent:
 
         # Generate possible action list
         actions, ratio = generate_successor_actions(self.board, color)
-        print(ratio)
 
         # Check if the game is over
         if self.board.winner_color == self._color:

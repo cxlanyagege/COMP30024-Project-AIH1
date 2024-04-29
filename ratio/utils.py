@@ -29,10 +29,10 @@ def heuristic(
 
     # Return the heuristic value depending on player's color
     if color == PlayerColor.RED:
-        print(red_score - blue_score)
+        # print(red_score - blue_score)
         return red_score - blue_score
     elif color == PlayerColor.BLUE:
-        print(blue_score - red_score)
+        # print(blue_score - red_score)
         return blue_score - red_score
 
 
