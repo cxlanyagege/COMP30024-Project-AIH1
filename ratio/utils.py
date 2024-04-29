@@ -9,33 +9,6 @@ from referee.game import PlayerColor, Action, PlaceAction, Coord
 import random
 
 
-def heuristic(
-        board: dict[Coord, PlayerColor], 
-        color: PlayerColor,
-        actions: list[Action],
-        skip_color: PlayerColor,
-        prev_actions: list[Action]
-        ) -> float:
-    
-    # Calculate the heuristic value of the board
-    if skip_color == PlayerColor.RED:
-        red_actions = actions
-        blue_actions = prev_actions
-    elif skip_color == PlayerColor.BLUE:
-        red_actions = prev_actions
-        blue_actions = actions
-    red_score = len(red_actions)
-    blue_score = len(blue_actions)
-
-    # Return the heuristic value depending on player's color
-    if color == PlayerColor.RED:
-        # print(red_score - blue_score)
-        return red_score - blue_score
-    elif color == PlayerColor.BLUE:
-        # print(blue_score - red_score)
-        return blue_score - red_score
-
-
 def generate_random_action(
         board_size = 11
         ) -> Action:

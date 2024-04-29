@@ -4,7 +4,7 @@
 # Author: He Shen, Lanruo Su
 
 from referee.game import PlayerColor, Action, PlaceAction, Coord, board
-from .utils import heuristic, generate_successor_actions
+from .utils import generate_successor_actions
 
 import random
 
