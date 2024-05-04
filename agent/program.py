@@ -3,8 +3,9 @@
 # Team: AIH1
 # Author: He Shen, Lanruo Su
 
-from referee.game import PlayerColor, Action, PlaceAction, Coord, board
+from referee.game import PlayerColor, Action, PlaceAction, board
 from .utils import heuristic, generate_successor_actions
+from .transposition_table import TranspositionTable
 
 import random
 
@@ -33,6 +34,9 @@ class Agent:
 
         # Set the initial max depth
         self.max_depth = 1
+
+        # Initialize transposition table
+        self.transposition_table = TranspositionTable()
 
     def action(self, **referee: dict) -> Action:
         """
@@ -90,6 +94,15 @@ class Agent:
         algorithm with alpha-beta pruning. It should return the score of the
         action given the current board state.
         """
+
+        # Generate current board state hash
+        board_hash = self.transposition_table.generate_hash(self.board._state)
+        lookup_result = self.transposition_table.lookup(board_hash, depth)
+
+        # Look up transposition table
+        if lookup_result:
+            print(lookup_result)
+            return lookup_result
         
         # Set opponent's color
         match self._color:
@@ -111,6 +124,7 @@ class Agent:
         if depth == self.max_depth:
             return heuristic(self.board, self._color, actions, color, prev_actions)
 
+        # Minimax with alpha-beta pruning
         if color == self._color:
             for action in actions:
 
@@ -125,8 +139,9 @@ class Agent:
                 # Prune the search tree
                 if alpha >= beta:
                     return alpha
-
-            return alpha
+                
+            # Recore current board into table
+            self.transposition_table.store(board_hash, depth, alpha)
         else:
             for action in actions:
 
@@ -141,8 +156,11 @@ class Agent:
                 # Prune the search tree
                 if beta <= alpha:
                     return beta
-
-            return beta
+                
+            # Recore current board into table
+            self.transposition_table.store(board_hash, depth, beta)
+                
+        return alpha if color == self._color else beta
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         """
