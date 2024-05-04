@@ -140,7 +140,7 @@ class Agent:
                 if alpha >= beta:
                     return alpha
                 
-            # Recore current board into table
+            # Record current board into table
             self.transposition_table.store(board_hash, depth, alpha)
         else:
             for action in actions:
@@ -157,7 +157,7 @@ class Agent:
                 if beta <= alpha:
                     return beta
                 
-            # Recore current board into table
+            # Record current board into table
             self.transposition_table.store(board_hash, depth, beta)
                 
         return alpha if color == self._color else beta

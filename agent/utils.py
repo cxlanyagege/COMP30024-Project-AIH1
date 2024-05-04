@@ -65,11 +65,25 @@ def generate_successor_actions(
         while not is_valid:
             action = generate_random_action()
             for coord in action.coords:
+                # Check if the cell is empty
                 if board[coord].player == None:
                     is_valid = True
                 else:
                     is_valid = False
                     break
+
+                # Check if neighbor cells contain player
+                for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+                    nr, nc = adjust_coord(coord.r + dr, coord.c + dc)
+                    neighbor = Coord(nr, nc)
+                    if board[neighbor].player != None:
+                        is_valid = False
+                        break
+
+                # Re-generate action if invalid
+                if not is_valid:
+                    break
+
         successors.append(action)
     else:
         for x in range(board_size):
