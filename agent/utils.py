@@ -10,7 +10,6 @@ import random
 
 
 def heuristic(
-        board: dict[Coord, PlayerColor], 
         color: PlayerColor,
         actions: list[Action],
         skip_color: PlayerColor,

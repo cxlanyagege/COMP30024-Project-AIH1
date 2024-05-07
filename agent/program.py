@@ -122,7 +122,7 @@ class Agent:
         
         # Check if the search depth is reached
         if depth == self.max_depth:
-            return heuristic(self.board, self._color, actions, color, prev_actions)
+            return heuristic(self._color, actions, color, prev_actions)
 
         # Minimax with alpha-beta pruning
         if color == self._color:
