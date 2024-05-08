@@ -8,7 +8,6 @@ from referee.game import PlayerColor, Action, PlaceAction, Coord
 
 import random
 
-
 def heuristic(
         color: PlayerColor,
         actions: list[Action],
@@ -28,10 +27,8 @@ def heuristic(
 
     # Return the heuristic value depending on player's color
     if color == PlayerColor.RED:
-        # print(red_score - blue_score)
         return red_score - blue_score
     elif color == PlayerColor.BLUE:
-        # print(blue_score - red_score)
         return blue_score - red_score
 
 

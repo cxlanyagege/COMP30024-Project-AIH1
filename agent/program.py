@@ -101,7 +101,6 @@ class Agent:
 
         # Look up transposition table
         if lookup_result:
-            print(lookup_result)
             return lookup_result
         
         # Set opponent's color
