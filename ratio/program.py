@@ -111,7 +111,10 @@ class Agent:
         
         # Check if the search depth is reached
         if depth == self.max_depth:
-            return -ratio
+            if color == self._color:
+                return ratio
+            elif color == opponent:
+                return 1 - ratio
 
         if color == self._color:
             for action in actions:
